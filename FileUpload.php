@@ -215,18 +215,23 @@
 			{
 				if( isset($file['tmp_name']) )
 				{
-					$this->file = array_intersect_key( $file, $this->file ) + $this->file;
-
-					// if has error, leave it
-					if( !$this->file['error'] )
+					if( is_file($file['tmp_name']) && is_readable($file['tmp_name']) )
 					{
-						if( !isset($this->file['name']) || empty($this->file['name']) )
-							{ $this->file['name'] = pathinfo( $this->file['tmp_name'], PATHINFO_BASENAME ); }
-						if( !isset($this->file['size']) || !$this->file['size'] )
-							{ $this->file['size'] = (int)@filesize($this->file['tmp_name']); }
-					}
+						$this->file = array_intersect_key( $file, $this->file ) + $this->file;
 
-					$this->config['checkIsUploaded'] = false;
+						// if has error, leave it
+						if( !$this->file['error'] )
+						{
+							if( !isset($this->file['name']) || empty($this->file['name']) )
+								{ $this->file['name'] = pathinfo( $this->file['tmp_name'], PATHINFO_BASENAME ); }
+							if( !isset($this->file['size']) || !$this->file['size'] )
+								{ $this->file['size'] = (int)@filesize($this->file['tmp_name']); }
+
+							$this->config['checkIsUploaded'] = false;
+						}
+					}
+					else
+						{ $this->file['error'] = UPLOAD_ERR_NO_FILE; }
 				}
 				else
 					{ $this->fail( new \Exception( sprintf(self::$messages[self::E_INVALID_ARG],__FUNCTION__), self::E_INVALID_ARG ) ); }
@@ -254,8 +259,10 @@
 			}
 		}
 
+
 	// >>> CONFIGURATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		// configs should not rely on any file info, it may be unavailable in config phase.
+
 
 		/** Set saveName.
 		 *	@param string $baseName Name to set.
@@ -499,7 +506,9 @@
 			return $this;
 		}
 
+
 	// >>> ACTIONS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 		/** Set configurations.
 		 *	@note If an error is already occured, this returns false without setting anything.
@@ -740,7 +749,9 @@
 			$this->done = false;
 		}
 
+
 	// >>> INFORMATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 		/** Get file info.
 		 *	Delegates call to finfo::file on the temporary file with the given options.
@@ -820,7 +831,9 @@
 				{ return $this->fInfoInstance->file( $this->file['tmp_name'], FILEINFO_MIME ); }
 		}
 
+
 	// >>> TOOLS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 		/** Convert bytes to human-readably form with metric prefixes.
 		 *	Formatted like "5.3MB" or "1021B"
@@ -923,10 +936,10 @@
 		 *	@param \Exception $exception.*/
 		protected function fail( \Exception $exception )
 		{
-			if( $this->config['noThrow'] )
-				{ $this->exception = $exception; }	// returning false is the responsibility of the caller
-			else
+			$this->exception = $exception;
+			if( !$this->config['noThrow'] )
 				{ throw $exception; }
+			// returning false is the responsibility of the caller
 		}
 
 		/** Move file to final destination.
