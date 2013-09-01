@@ -20,7 +20,7 @@ allowing more advanced settings:
 ```php
 $fu = new FileUpload( 'fileFieldName', array(
 	'saveName:full' => '\md5',
-	'allowMime' => 'application, !x-executable, '!octet-stream',
+	'allowMime' => 'application, !x-executable, !octet-stream',
 	'sizeLimit' => '3M' ) );
 if( !$fu->save('to/dir/') )
 	{ echo $fu->getErrorMessage(); }
